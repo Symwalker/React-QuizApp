@@ -6,16 +6,13 @@ import React, { useEffect, useState } from 'react';
 const App = () => {
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [answers, setAnswers] = useState([]);
     const [ShowResult, setShowResult] = useState(false);
     const [score, setScore] = useState(0);
     const [slectedAnswer, setSelectedAnswer] = useState(null)
-    console.log(answers);
-    console.log(questions)
+    console.log(questions[currentIndex]?.options);
     const shuffleArray = (array) => {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            console.log(j, " ", i);
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
@@ -25,12 +22,11 @@ const App = () => {
         fetch('https://the-trivia-api.com/v2/questions')
             .then((res) => res.json())
             .then((res) => {
-                const inCorrectAnswers = res[currentIndex].incorrectAnswers;
-                const ans = [...inCorrectAnswers, res[currentIndex].correctAnswer];
-                const shuffledAnswers = shuffleArray(ans);
-                setAnswers(shuffledAnswers);
+                res.map((item) => {
+                    item.options = [...item.incorrectAnswers, item.correctAnswer]
+                    item.options = shuffleArray(item.options);
+                })
                 setQuestions(res);
-                setSelectedAnswer(null)
             });
     };
 
@@ -60,7 +56,7 @@ const App = () => {
 
     useEffect(() => {
         getQuestionFromApi();
-    }, [currentIndex]); // Include currentIndex as a dependency to trigger the effect when it changes
+    }, []); // Include currentIndex as a dependency to trigger the effect when it changes
 
     if (!questions.length) {
         return <div>loading</div>;
@@ -68,7 +64,6 @@ const App = () => {
 
     return (
         <div className='bg-gray-200 h-screen p-10'>
-
             <div className='mx-auto rounded-lg z-50 bg-white max-w-[550px]  hadow-sm '>
                 {
                     ShowResult ? (
@@ -84,13 +79,15 @@ const App = () => {
                                 <h2 className='text-[22px] font-bold p-1'>Q{currentIndex + 1}) {questions[currentIndex].question.text}</h2>
                             </div>
                             <ul>
-                                {answers.map((item, i) => (
-                                    // <li key={i}>{item}</li>
-                                    <li className='flex items-center gap-4 p-1'>
-                                        <input className='w-[20px] h-[20px]' type="checkbox" onChange={() => handleSelectedAnswer(item)} checked={slectedAnswer === item} />
-                                        <label className='text-[20px]' >{item}</label>
-                                    </li>
-                                ))}
+                                {
+                                    questions[currentIndex]?.options.map((item, i) => (
+                                        <li className='flex items-center gap-4 p-1' key={i}>
+                                            <input className='w-[20px] h-[20px]' type="checkbox" onChange={() => handleSelectedAnswer(item)} checked={slectedAnswer === item} />
+                                            <label className='text-[20px]' >{item}</label>
+                                        </li>
+                                    ))
+                                }
+
                             </ul>
                             <div className=''>
                                 {currentIndex === questions.length - 1 ? (
